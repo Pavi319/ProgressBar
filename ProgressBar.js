@@ -10,7 +10,7 @@ function ProgressBar(str,options) {
         options.total=total
     }
     this.str =str;
-    this.total = options.total;
+    this.total = options.total || 100;
     this.curr = options.curr || 0
     this.width = options.width || this.total
     this.characters = {
@@ -23,9 +23,18 @@ function ProgressBar(str,options) {
     this.callback = options.callback || function () {};
     this.tokens = {};
     this.lastDraw = ''
+    this.ticksWithoutProgress = 0;
+    this.ticksTillRising = 5;
+    this.timeout=options.timeout!== 0 ? (options.timeout || null) : 0;
 }
 
 ProgressBar.prototype.tick = function(length,tokens){
+    if(this.timeout>=0){
+        if(this.ticksWithoutProgress%this.ticksTillRising === 0){
+            this.timeout+=this.ticksTillRising;
+        }
+        this.ticksWithoutProgress++;
+    }
     if(length !== 0){length= length || 1;}
 
     if(tokens){this.tokens = tokens}
@@ -34,10 +43,29 @@ ProgressBar.prototype.tick = function(length,tokens){
     this.curr +=length;
 
     this.render();
-
     if(this.curr >= this.total){
         this.render(undefined,true);
-        this.complete= true;
+        this.complete = true;
+        this.terminate();
+        this.callback(this)
+        return;
+    }
+}
+
+
+ProgressBar.prototype.progress = function(progress){
+    console.log(this.timeout,progress)
+    if(this.curr === 0) {this.start = new Date;}
+    progress +=this.timeout
+    if(progress>this.total){
+        progress = this.total;
+    }
+
+    this.curr = progress;
+    this.render();
+    if(this.curr >= this.total){
+        this.render(undefined,true);
+        this.complete = true;
         this.terminate();
         this.callback(this)
         return;
@@ -61,14 +89,12 @@ ProgressBar.prototype.render = function (tokens, boolean){
     let eta;
     if(percent === 100) { eta = 0}
     else { eta = elapsed * (this.total / this.curr -1)}
-    const rate = this.curr / (elapsed / 1000);
     let string = this.str
         .replace(':current',this.curr)
         .replace(':total',this.total)
-        .replace('elapsed',!isNaN(elapsed) ? (elapsed / 1000).toFixed(1) : '0:0')
-        .replace(':eta',!(isNaN(eta) || !isFinite(eta)) ? (eta/1000).toFixed(1) : '0.0')
+        .replace(':elapsed',!isNaN(elapsed) ? (elapsed / 1000).toFixed(1) : '0:0')
+        .replace(':eta',!(isNaN(eta) || !isFinite(eta)) ? (eta/1000).toFixed(1) + 's' : '0.0s')
         .replace(':percent',percent.toFixed(0) + '%')
-        .replace(':rate',Math.round(rate))
 
     //this.stream.columns - A number specifying the number of columns the steam currently has.
     let freeSpace = Math.max(0,this.stream.columns - string.replace(':bar','').length);
@@ -89,15 +115,21 @@ ProgressBar.prototype.render = function (tokens, boolean){
     }
 
     string = string.replace(':bar',complete + incomplete);
+    if(this.tokens){
+        for(let key in this.tokens){
+            string = string.replace(':' + key,this.tokens[key])
+        }
+    }
     if(this.lastDraw !==string){
         this.stream.cursorTo(0);
         this.stream.write(string);
         this.stream.clearLine(1)
-        this.lastDraw= string
+        this.lastDraw = string
     }
 }
 
 ProgressBar.prototype.terminate = function() {
+    console.log(this.timeout)
     if(this.clear){
         if(this.stream.clearLine){
             this.stream.clearLine();
