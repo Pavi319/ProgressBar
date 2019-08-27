@@ -18,31 +18,42 @@ function ProgressBar(str,options) {
         incomplete : options.incomplete || '+',
         head : options.head || (options.complete || '-')
     }
-    this.renderRule = options.renderRule || 10
+    this.renderRule = options.renderRule || 16
     this.lastRender = -Infinity;
     this.callback = options.callback || function () {};
     this.tokens = {};
     this.lastDraw = ''
-    this.ticksWithoutProgress = 0;
-    this.ticksTillRising = 5;
-    this.timeout=options.timeout!== 0 ? (options.timeout || null) : 0;
+    this.timeout=options.timeout !== 0 ? (options.timeout || null) : 0;
 }
 
 ProgressBar.prototype.tick = function(length,tokens){
-    if(this.timeout>=0){
-        if(this.ticksWithoutProgress%this.ticksTillRising === 0){
-            this.timeout+=this.ticksTillRising;
-        }
-        this.ticksWithoutProgress++;
-    }
-    if(length !== 0){length= length || 1;}
-
+    if(this.curr === 0) {this.start = new Date;}
     if(tokens){this.tokens = tokens}
-
-    if(this.curr === 0) {this.start = new Date;}
-    this.curr +=length;
-
-    this.render();
+    if(length !== 0){length= length || 1;}
+    this.tickStart = new Date;
+    if(this.timeout!== null){
+        if(this.tickEnd){          
+            if(this.tickStart-this.tickEnd >= this.timeout){
+                setTimeout(() => {
+                    this.curr +=length -1 ;
+                    this.render();
+                },this.timeout)
+                this.stream.clearLine(1);
+                this.stream.cursorTo(0);
+                this.curr +=1;
+                this.render();
+            } else {
+                this.curr +=length;
+                this.render();
+            }
+        } else {
+            this.curr +=length;
+            this.render();
+        }
+    } else {
+        this.curr +=length;
+        this.render();
+    }
     if(this.curr >= this.total){
         this.render(undefined,true);
         this.complete = true;
@@ -50,27 +61,28 @@ ProgressBar.prototype.tick = function(length,tokens){
         this.callback(this)
         return;
     }
+    this.tickEnd = this.tickStart;
 }
 
 
-ProgressBar.prototype.progress = function(progress){
-    console.log(this.timeout,progress)
-    if(this.curr === 0) {this.start = new Date;}
-    progress +=this.timeout
-    if(progress>this.total){
-        progress = this.total;
-    }
+// ProgressBar.prototype.progress = function(progress){
+  
+//     if(progress){} 
+//     else {progress = curr}
+//     if(this.curr === 0) {this.start = new Date;}
+    
+//     if(progress>this.total){progress = this.total;}
 
-    this.curr = progress;
-    this.render();
-    if(this.curr >= this.total){
-        this.render(undefined,true);
-        this.complete = true;
-        this.terminate();
-        this.callback(this)
-        return;
-    }
-}
+//     this.curr = progress;
+//     this.render();
+//     if(this.curr >= this.total){
+//         this.render(undefined,true);
+//         this.complete = true;
+//         this.terminate();
+//         this.callback(this)
+//         return;
+//     }
+// }
 
 ProgressBar.prototype.render = function (tokens, boolean){
     if (boolean === undefined){boolean= false;}
@@ -129,7 +141,6 @@ ProgressBar.prototype.render = function (tokens, boolean){
 }
 
 ProgressBar.prototype.terminate = function() {
-    console.log(this.timeout)
     if(this.clear){
         if(this.stream.clearLine){
             this.stream.clearLine();

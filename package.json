@@ -1,0 +1,19 @@
+{
+  "name": "progressbar-first-version-for-rms",
+  "version": "1.0.0",
+  "description": "console progressbar",
+  "main": "ProgressBar.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pavi319/ProgressBar.git"
+  },
+  "author": "Paval Victor",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Pavi319/ProgressBar/issues"
+  },
+  "homepage": "https://github.com/Pavi319/ProgressBar#readme"
+}
