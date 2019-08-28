@@ -24,65 +24,41 @@ function ProgressBar(str,options) {
     this.tokens = {};
     this.lastDraw = ''
     this.timeout=options.timeout !== 0 ? (options.timeout || null) : 0;
+    this.timeoutIntervalId = null; 
 }
 
-ProgressBar.prototype.tick = function(length,tokens){
+ProgressBar.prototype.progress = function(length,tokens){
     if(this.curr === 0) {this.start = new Date;}
     if(tokens){this.tokens = tokens}
     if(length !== 0){length= length || 1;}
-    this.tickStart = new Date;
+    if(this.timeoutIntervalId){clearInterval(this.timeoutIntervalId)}
+   
     if(this.timeout!== null){
-        if(this.tickEnd){          
-            if(this.tickStart-this.tickEnd >= this.timeout){
-                setTimeout(() => {
-                    this.curr +=length -1 ;
+                this.timeoutIntervalId = setInterval(() => {
+                    this.curr +=1 ;
                     this.render();
                 },this.timeout)
                 this.stream.clearLine(1);
                 this.stream.cursorTo(0);
-                this.curr +=1;
+                this.curr =length;
                 this.render();
-            } else {
-                this.curr +=length;
-                this.render();
-            }
-        } else {
-            this.curr +=length;
-            this.render();
-        }
     } else {
-        this.curr +=length;
+        this.curr =length;
         this.render();
     }
     if(this.curr >= this.total){
         this.render(undefined,true);
         this.complete = true;
+        clearInterval(this.timeoutIntervalId)
         this.terminate();
         this.callback(this)
         return;
     }
-    this.tickEnd = this.tickStart;
+    
 }
 
 
-// ProgressBar.prototype.progress = function(progress){
-  
-//     if(progress){} 
-//     else {progress = curr}
-//     if(this.curr === 0) {this.start = new Date;}
-    
-//     if(progress>this.total){progress = this.total;}
-
-//     this.curr = progress;
-//     this.render();
-//     if(this.curr >= this.total){
-//         this.render(undefined,true);
-//         this.complete = true;
-//         this.terminate();
-//         this.callback(this)
-//         return;
-//     }
-// }
+let eta = 0;
 
 ProgressBar.prototype.render = function (tokens, boolean){
     if (boolean === undefined){boolean= false;}
@@ -98,9 +74,16 @@ ProgressBar.prototype.render = function (tokens, boolean){
 
     const percent = Math.floor(ratio*100);
     const elapsed = new Date - this.start;
-    let eta;
-    if(percent === 100) { eta = 0}
-    else { eta = elapsed * (this.total / this.curr -1)}
+    let tempEta;
+    if(percent === 100) { tempEta = 0}
+    else { tempEta = elapsed * (this.total / this.curr -1)}
+    if(Math.abs(tempEta -eta)>2000){
+        eta=tempEta
+    }
+    if(tempEta<=10000){
+        eta=tempEta
+    }
+    // console.log(Math.abs(eta))
     let string = this.str
         .replace(':current',this.curr)
         .replace(':total',this.total)
