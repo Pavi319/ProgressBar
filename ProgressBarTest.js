@@ -1,6 +1,6 @@
 progressBar = require('../ProgressBar/ProgressBar');
 
-const bar = new progressBar('downloading [:bar] :percent :eta',{total: 100, width:40,complete: '=',incomplete: '-',callback: showFive,timeout: 2000})
+const bar = new progressBar('downloading [:bar] :percent :eta',{total: 100, width:40,complete: '=',incomplete: '-',callback: showFive,timeout: 500})
 
 // let timer = setInterval(function() {
 //   bar.tick(10)
@@ -21,7 +21,7 @@ let time = new Date()
 //   //sum = Math.random()*10
 //   sum += 2;
 //   // console.log(sum)
-//   bar.tick(sum)
+//   bar.progress(sum)
 //   if(bar.complete) {
 //     console.log('\n Complete \n');
 //     clearInterval(timer2)

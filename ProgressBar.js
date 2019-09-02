@@ -1,5 +1,9 @@
 exports = module.exports = ProgressBar;
-    
+
+let eta = 0
+let ratio = 0
+let percent = 0
+let elapsed = 0
 function ProgressBar(str,options) {
     //process.stderr - the standard error steam 
     this.stream = options.stream || process.stderr;
@@ -32,22 +36,25 @@ ProgressBar.prototype.progress = function(length,tokens){
     if(tokens){this.tokens = tokens}
     if(length !== 0){length= length || 1;}
     if(this.timeoutIntervalId){clearInterval(this.timeoutIntervalId)}
-   
     if(this.timeout!== null){
                 this.timeoutIntervalId = setInterval(() => {
                     this.curr +=1 ;
+                    this.verifyEtaAndRatio();    
                     this.render();
                 },this.timeout)
                 this.stream.clearLine(1);
                 this.stream.cursorTo(0);
                 this.curr =length;
                 this.render();
+
     } else {
         this.curr =length;
         this.render();
+
     }
+    this.verifyEtaAndRatio();
     if(this.curr >= this.total){
-        this.render(undefined,true);
+        this.render(undefined,false);
         this.complete = true;
         clearInterval(this.timeoutIntervalId)
         this.terminate();
@@ -56,33 +63,32 @@ ProgressBar.prototype.progress = function(length,tokens){
     }
     
 }
-
-
-let eta = 0;
-
-ProgressBar.prototype.render = function (tokens, boolean){
-    if (boolean === undefined){boolean= false;}
-    if(tokens){ this.tokens = tokens}
-    //this.stream.isTTY - A boolean that is always true for reading instances
-    if(!this.stream.isTTY) {return;}
-    const now = Date.now();
-    const timeDifference = now-this.lastRender;
-    if(!boolean && (timeDifference < this.renderRule)) { return; } 
-    else { this.lastRender = now;}
-    let ratio =this.curr/this.total;
+ProgressBar.prototype.verifyEtaAndRatio = function(){
+    ratio =this.curr/this.total;
     ratio = Math.min(Math.max(ratio,0),1);
 
-    const percent = Math.floor(ratio*100);
-    const elapsed = new Date - this.start;
+    percent = Math.floor(ratio*100);
+    elapsed = new Date - this.start;
     let tempEta;
     if(percent === 100) { tempEta = 0}
     else { tempEta = elapsed * (this.total / this.curr -1)}
-    if(Math.abs(tempEta -eta)>2000){
+    if(Math.abs(tempEta - eta)>2000){
         eta=tempEta
     }
     if(tempEta<=10000){
         eta=tempEta
     }
+}
+
+ProgressBar.prototype.render = function (tokens, stopRender){
+    if (stopRender === undefined){stopRender= true;}
+    //this.stream.isTTY - A boolean that is always true for reading instances
+    if(!this.stream.isTTY) {return;}
+    const now = Date.now();
+    const timeDifference = now-this.lastRender;
+    if(stopRender && (timeDifference < this.renderRule)) { return; } 
+    else { this.lastRender = now;}
+    
     // console.log(Math.abs(eta))
     let string = this.str
         .replace(':current',this.curr)
@@ -110,6 +116,7 @@ ProgressBar.prototype.render = function (tokens, boolean){
     }
 
     string = string.replace(':bar',complete + incomplete);
+    if(tokens){ this.tokens = tokens}
     if(this.tokens){
         for(let key in this.tokens){
             string = string.replace(':' + key,this.tokens[key])
