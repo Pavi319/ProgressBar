@@ -1,9 +1,6 @@
 exports = module.exports = ProgressBar;
 
-let eta = 0
-let ratio = 0
-let percent = 0
-let elapsed = 0
+let eta = ratio =  percent =  elapsed = 0
 function ProgressBar(str,options) {
     //process.stderr - the standard error steam 
     this.stream = options.stream || process.stderr;
