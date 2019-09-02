@@ -19,7 +19,7 @@ function ProgressBar(str,options) {
         head : options.head || (options.complete || '-')
     }
     this.renderRule = options.renderRule || 16
-    this.lastRender = -Infinity;
+    this.lastRender = -1;
     this.callback = options.callback || function () {};
     this.tokens = {};
     this.lastDraw = ''
