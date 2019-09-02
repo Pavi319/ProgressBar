@@ -63,7 +63,6 @@ ProgressBar.prototype.progress = function(length,tokens){
 ProgressBar.prototype.verifyEtaAndRatio = function(){
     ratio =this.curr/this.total;
     ratio = Math.min(Math.max(ratio,0),1);
-
     percent = Math.floor(ratio*100);
     elapsed = new Date - this.start;
     let tempEta;
