@@ -31,25 +31,37 @@ function ProgressBar(str,options) {
 ProgressBar.prototype.progress = function(length,tokens){
     if(this.curr === 0) {this.start = new Date;}
     if(tokens){this.tokens = tokens}
+    let startTime= new Date;
     if(length !== 0){length= length || 1;}
     if(this.timeoutIntervalId){clearInterval(this.timeoutIntervalId)}
     if(this.timeout!== null){
-                this.timeoutIntervalId = setInterval(() => {
-                    this.curr +=1 ;
-                    this.verifyEtaAndRatio();    
-                    this.render();
-                },this.timeout)
-                this.stream.clearLine(1);
-                this.stream.cursorTo(0);
-                this.curr =length;
-                this.render();
+        this.timeoutIntervalId = setInterval(() => {
+            this.curr +=1 ;
+            console.log(this.curr)
+            this.verifyEtaAndRatio();    
+            this.render();
+        },this.timeout)
+        // let stopDate = new Date;
+        // this.timeoutIntervalId = function(){
+        //     this.curr +=1 ;
+        //     console.log(this.curr)
+        //     this.verifyEtaAndRatio();    
+        //     this.render();
+        //     timer= setTimeout(this.timeoutIntervalId(),1000);
+        // }
+        // let timer= setTimeout(this.timeoutIntervalId(),1000);
+        this.stream.clearLine(1);
+        this.stream.cursorTo(0);
+        this.curr =length;
+        this.verifyEtaAndRatio();    
+        this.render();
 
     } else {
         this.curr =length;
+        this.verifyEtaAndRatio();
         this.render();
 
     }
-    this.verifyEtaAndRatio();
     if(this.curr >= this.total){
         this.render(undefined,false);
         this.complete = true;
@@ -57,9 +69,18 @@ ProgressBar.prototype.progress = function(length,tokens){
         this.terminate();
         this.callback(this)
         return;
-    }
-    
+     }
 }
+
+ProgressBar.prototype.getProgress=function(){
+    return this.curr;
+}
+// ProgressBar.prototype.timeoutProcess = function(){
+//     this.curr +=1 ;
+//     console.log(this.curr)
+//     this.verifyEtaAndRatio();    
+//     this.render();
+// }
 ProgressBar.prototype.verifyEtaAndRatio = function(){
     ratio =this.curr/this.total;
     ratio = Math.min(Math.max(ratio,0),1);
@@ -67,7 +88,9 @@ ProgressBar.prototype.verifyEtaAndRatio = function(){
     elapsed = new Date - this.start;
     let tempEta;
     if(percent === 100) { tempEta = 0}
-    else { tempEta = elapsed * (this.total / this.curr -1)}
+    else { 
+        tempEta = elapsed * (this.total / this.curr -1)
+    }
     if(Math.abs(tempEta - eta)>2000){
         eta=tempEta
     }
